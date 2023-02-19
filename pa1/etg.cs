@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 struct Coords {
 	public int x;
@@ -54,7 +55,7 @@ class Location {
 	bool isExit;
 	Key key;
 	bool keyLocation, keyTaken;
-	Loot loot;
+	List<Loot> loot;
 	bool lootLocation, lootTaken;
 	Skeleton skeleton;
 	bool skeletonLocation;
@@ -86,19 +87,26 @@ class Location {
 	public Key getKey(){ return this.key; }
 
 	//Loot
-	public void addLoot(int count){
-		this.loot = new Loot();
-		this.loot.numCoins = count;
-		this.loot.chestOpened = false;
+	public void createLootList(){
+		this.loot = new List<Loot>();
 		this.lootLocation = true;
 	}
-	public void emptyChest(){ 
-		this.lootTaken = true; 
-		this.loot.chestOpened = true;
+	public void addLoot(int count){
+		/*this.loot = new Loot();
+		this.loot.numCoins = count;
+		this.loot.chestOpened = false;
+		this.lootLocation = true;*/
+		this.loot.Add(new Loot() { numCoins = count, chestOpened = false }); 
+	}
+	public void emptyChest(){
+		this.lootTaken = true;
+		foreach (Loot numChests in loot){
+			numChests.chestOpened = true;
+		}
 	}
 	public bool isLootLocation(){ return this.lootLocation; }
 	public bool isLootTaken(){ return this.lootTaken; }
-	public Loot getLoot(){ return this.loot; }
+	public List<Loot> getLoot(){ return this.loot; }
 
 	//Skeleton
 	public void addSkeleton(){
@@ -276,10 +284,14 @@ class Game {
 						// Add loot to location x, y with count coins
 						if(level.getGrid()[x, y] == null){
 							Location chestSpot = new Location();
+							chestSpot.createLootList();
 							chestSpot.addLoot(count);
 							level.getGrid()[x, y] = chestSpot;
 						}
 						else{
+							if(level.getGrid()[x, y].getLoot() == null){
+								level.getGrid()[x, y].createLootList();
+							}
 							level.getGrid()[x, y].addLoot(count);
 						}
 						break;
@@ -353,22 +365,16 @@ class Game {
 						exit.interact(this.is_over());
 						this.exit_if_over();
 					}
-					//Player reaches the key 
+					//Player reaches the key (only looking)
 					if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
 						currentSpot.getKey().look();
-						/*if(!currentSpot.isKeyTaken()){
-							//currentSpot.getKey().look();
-							currentSpot.getKey().interact(this.player);
-							currentSpot.removeKey();
-						}*/
 					}
-					//Player reaches the loot
+					//Player reaches the loot (only looking)
 					if(currentSpot.isLootLocation()){
-						currentSpot.getLoot().look();
-						/*currentSpot.getLoot().interact(this.player);
-						if(!currentSpot.isLootTaken()){
-							currentSpot.emptyChest();
-						}*/
+						foreach(Loot numChest in currentSpot.getLoot()){
+							numChest.look();
+						}	
+						//currentSpot.getLoot().look();
 					}
 					//Player reaches the skeleton
 					if(currentSpot.isSkeletonLocation()){
@@ -389,7 +395,10 @@ class Game {
 							currentSpot.removeKey();
 						}
 						if(currentSpot.isLootLocation()){
-							currentSpot.getLoot().interact(this.player);
+							foreach(Loot numChest in currentSpot.getLoot()){
+								numChest.interact(this.player);
+							}
+							//currentSpot.getLoot().interact(this.player);
 							if(!currentSpot.isLootTaken()){ currentSpot.emptyChest(); }
 						}
 					}
@@ -410,7 +419,10 @@ class Game {
 					}
 					//Player spots loot
 					if(nextSpot.isLootLocation()){ 
-						nextSpot.getLoot().look(); 
+						foreach(Loot numChest in nextSpot.getLoot()){
+							numChest.look();
+						}
+						//nextSpot.getLoot().look(); 
 					}
 					//Player spots "nothing" (aka hidden skeleton)
 					if(nextSpot.isSkeletonLocation()){
@@ -474,7 +486,12 @@ class Game {
 				exit.look(); 
 			}
 			if(spot.isKeyLocation()){ spot.getKey().look(); }
-			if(spot.isLootLocation()){ spot.getLoot().look(); }
+			if(spot.isLootLocation()){ 
+				foreach(Loot numChest in spot.getLoot()){
+					numChest.look();
+				}
+				//spot.getLoot().look(); 
+			}
 			if(spot.isSkeletonLocation()){ spot.getSkeleton().look(); }
 		}	
 		Console.Write($"{this.player.coords.x}, {this.player.coords.y}> ");
