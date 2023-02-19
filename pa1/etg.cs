@@ -56,8 +56,8 @@ class Location {
 	bool keyLocation, keyTaken;
 	Loot loot;
 	bool lootLocation, lootTaken;
-
-	//skeleton
+	Skeleton skeleton;
+	bool skeletonLocation;
 
 	public Location(){
 		this.isExit = false;
@@ -67,6 +67,8 @@ class Location {
 		this.loot = null;
 		this.lootLocation = false;
 		this.lootTaken = false;
+		this.skeleton = null;
+		this.skeletonLocation = false;
 	}
 
 	//Exit
@@ -97,6 +99,14 @@ class Location {
 	public bool isLootLocation(){ return this.lootLocation; }
 	public bool isLootTaken(){ return this.lootTaken; }
 	public Loot getLoot(){ return this.loot; }
+
+	//Skeleton
+	public void addSkeleton(){
+		this.skeleton = new Skeleton();
+		this.skeletonLocation = true;
+	}
+	public bool isSkeletonLocation(){ return this.skeletonLocation; }
+	public Skeleton getSkeleton(){ return this.skeleton; }
 }
 
 
@@ -154,17 +164,22 @@ class Loot : Entity {
 		}
 		else{
 			Console.WriteLine($"You open the chest and find {this.numCoins} coins!");
-			player.coinInventory = numCoins;
+			player.coinInventory += numCoins;
 		}
 	}
 }
 
-/*
-   class Skeleton : Entity {
-   public override void look() {}
-   public override void interact(Player player);
-//kill player on interact()
-}*/
+
+class Skeleton : Entity {
+   public override void look(){
+		Console.WriteLine("Not much to see here.");
+   }
+   public override void interact(Player player){
+		Console.WriteLine("A bony arm juts out of the ground and grabs your ankle!");
+		Console.WriteLine("You've been dragged six feet under by a skeleton.");
+		player.set_alive_status(false);
+   }
+}
 
 
 
@@ -197,10 +212,10 @@ class Player {
 	}
 
 	public void print_stats() {
-		Console.WriteLine($"  LOCATION: {this.coords.x}, {this.coords.y}");
-		Console.WriteLine($"  COINS:	{this.coinInventory}");
-		Console.WriteLine($"  KEY:		{this.key_status}");
-		Console.WriteLine($"  DEAD:		{this.alive_status}");
+		Console.WriteLine(String.Format("{0,-12}{1}", "  LOCATION:", $"{this.coords.x}, {this.coords.y}"));
+		Console.WriteLine(String.Format("{0,-12}{1}", "  COINS:", $"{this.coinInventory}"));
+		Console.WriteLine(String.Format("{0,-12}{1}", "  KEY:", $"{this.key_status}"));
+		Console.WriteLine(String.Format("{0,-12}{1}", "  DEAD:", $"{!this.alive_status}"));
 	}
 }
 
@@ -270,6 +285,9 @@ class Game {
 						break;
 					case "skeleton":
 						// Add a skeleton to location x, y
+						Location skeletonSpot = new Location();
+						skeletonSpot.addSkeleton();
+						level.getGrid()[x, y] = skeletonSpot;
 						break;
 					default:
 						Console.WriteLine($"Bad command in level file: '{line}'");
@@ -327,25 +345,53 @@ class Game {
 					this.player.coords = new_coords;
 					Location currentSpot = level.getGrid()[this.player.coords.x, this.player.coords.y];
 					this.player.currentLocation = currentSpot;
+					
+					//Player reaches the exit
 					if(currentSpot.isExitLocation()){
 						Exit exit = new Exit();
+						exit.look();
 						exit.interact(this.is_over());
 						this.exit_if_over();
 					}
+					//Player reaches the key 
 					if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
 						currentSpot.getKey().look();
-						currentSpot.getKey().interact(this.player);
-						currentSpot.removeKey();
+						/*if(!currentSpot.isKeyTaken()){
+							//currentSpot.getKey().look();
+							currentSpot.getKey().interact(this.player);
+							currentSpot.removeKey();
+						}*/
 					}
+					//Player reaches the loot
 					if(currentSpot.isLootLocation()){
 						currentSpot.getLoot().look();
-						currentSpot.getLoot().interact(this.player);
+						/*currentSpot.getLoot().interact(this.player);
 						if(!currentSpot.isLootTaken()){
 							currentSpot.emptyChest();
-						}
+						}*/
 					}
-					if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
-						Console.WriteLine("Not much to see here");
+					//Player reaches the skeleton
+					if(currentSpot.isSkeletonLocation()){
+						currentSpot.getSkeleton().look();
+						currentSpot.getSkeleton().interact(this.player);
+						this.exit();
+					}
+
+
+					//Player acts on an empty spot
+					if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation() && !currentSpot.isSkeletonLocation()){
+						Console.WriteLine("Not much to see here.");
+					}
+					//Player acts on a specific location
+					else{
+						if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
+							currentSpot.getKey().interact(this.player);
+							currentSpot.removeKey();
+						}
+						if(currentSpot.isLootLocation()){
+							currentSpot.getLoot().interact(this.player);
+							if(!currentSpot.isLootTaken()){ currentSpot.emptyChest(); }
+						}
 					}
 					break;
 
@@ -353,18 +399,26 @@ class Game {
 					// Need to look at the location.
 					Location nextSpot = level.getGrid()[new_coords.x, new_coords.y];
 
+					//Player spots exit
 					if(nextSpot.isExitLocation()){ 
 						Exit exit = new Exit();
 						exit.look(); 
 					}
+					//Player spots key
 					if(nextSpot.isKeyLocation() && !nextSpot.isKeyTaken()){
 						nextSpot.getKey().look();
 					}
+					//Player spots loot
 					if(nextSpot.isLootLocation()){ 
 						nextSpot.getLoot().look(); 
 					}
-					if(!nextSpot.isExitLocation() && !nextSpot.isKeyLocation() && !nextSpot.isLootLocation()){
-						Console.WriteLine("Not much to see here");
+					//Player spots "nothing" (aka hidden skeleton)
+					if(nextSpot.isSkeletonLocation()){
+						nextSpot.getSkeleton().look();
+					}
+					//Player spots nothing
+					if(!nextSpot.isExitLocation() && !nextSpot.isKeyLocation() && !nextSpot.isLootLocation() && !nextSpot.isSkeletonLocation()){
+						Console.WriteLine("Not much to see here.");
 					}
 					break;
 
@@ -410,17 +464,18 @@ class Game {
 		Console.WriteLine("================================================================");
 		// Look at the current location.
 		Location spot = this.level.getGrid()[this.player.coords.x, this.player.coords.y];		
-		bool nothingThere = !spot.isExitLocation() && !spot.isKeyLocation() && !spot.isLootLocation();
+		bool nothingThere = !spot.isExitLocation() && !spot.isKeyLocation() && !spot.isLootLocation() && !spot.isSkeletonLocation();
 		if(nothingThere){
-			Console.WriteLine("Not much to see here");
+			Console.WriteLine("Not much to see here.");
 		}
 		else{
 			if(spot.isExitLocation()){
 				Exit exit = new Exit();
 				exit.look(); 
 			}
-			if(spot.isKeyLocation()){ spot.getKey().look();}
-			if(spot.isLootLocation()){ spot.getLoot().look();}
+			if(spot.isKeyLocation()){ spot.getKey().look(); }
+			if(spot.isLootLocation()){ spot.getLoot().look(); }
+			if(spot.isSkeletonLocation()){ spot.getSkeleton().look(); }
 		}	
 		Console.Write($"{this.player.coords.x}, {this.player.coords.y}> ");
 	}
