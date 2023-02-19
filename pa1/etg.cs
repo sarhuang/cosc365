@@ -1,5 +1,5 @@
 /* Name: Sarah Huang
- * Date: 2/
+ * Date: 2/19/23
  * Program: etg.cs
  * Purpose: A text-adventure game in object-oriented style where the player must find a key to escape the graveyard.
  *			The player will type commands to examine locations and move around the level.
@@ -8,6 +8,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+
 
 struct Coords {
 	public int x;
@@ -23,11 +24,11 @@ struct Coords {
 }
 
 
-
 /* Contains a grid of locations. */
 class Level {
 	Location[,] grid;
 	int x, y;
+
 	public Level() { 
 		this.grid = null; 
 		this.x = 0;
@@ -81,7 +82,9 @@ class Location {
 		this.key = new Key();
 		this.keyLocation = true;
 	}
-	public void removeKey(){ this.keyTaken = true; }
+	public void removeKey(){ 
+		this.keyTaken = true; 
+	}
 	public bool isKeyLocation(){ return this.keyLocation; }
 	public bool isKeyTaken(){ return this.keyTaken; }
 	public Key getKey(){ return this.key; }
@@ -92,10 +95,6 @@ class Location {
 		this.lootLocation = true;
 	}
 	public void addLoot(int count){
-		/*this.loot = new Loot();
-		this.loot.numCoins = count;
-		this.loot.chestOpened = false;
-		this.lootLocation = true;*/
 		this.loot.Add(new Loot() { numCoins = count, chestOpened = false }); 
 	}
 	public void emptyChest(){
@@ -297,9 +296,15 @@ class Game {
 						break;
 					case "skeleton":
 						// Add a skeleton to location x, y
-						Location skeletonSpot = new Location();
-						skeletonSpot.addSkeleton();
-						level.getGrid()[x, y] = skeletonSpot;
+						//Console.WriteLine($"{x}, {y}");
+						if(level.getGrid()[x, y] == null){
+							Location skeletonSpot = new Location();
+							skeletonSpot.addSkeleton();
+							level.getGrid()[x, y] = skeletonSpot;
+						}
+						else{
+							level.getGrid()[x, y].addSkeleton();
+						}
 						break;
 					default:
 						Console.WriteLine($"Bad command in level file: '{line}'");
@@ -376,20 +381,21 @@ class Game {
 						}	
 						//currentSpot.getLoot().look();
 					}
+	
 					//Player reaches the skeleton
-					if(currentSpot.isSkeletonLocation()){
+					/*if(currentSpot.isSkeletonLocation()){
 						currentSpot.getSkeleton().look();
 						currentSpot.getSkeleton().interact(this.player);
 						this.exit();
-					}
+					}*/
 
 
 					//Player acts on an empty spot
-					if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation() && !currentSpot.isSkeletonLocation()){
-						Console.WriteLine("Not much to see here.");
-					}
+				//	if(!currentSpot.isSkeletonLocation() && !currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
+				//		Console.WriteLine("Not much to see here.");
+				//	}
 					//Player acts on a specific location
-					else{
+				//	else{
 						if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
 							currentSpot.getKey().interact(this.player);
 							currentSpot.removeKey();
@@ -401,7 +407,21 @@ class Game {
 							//currentSpot.getLoot().interact(this.player);
 							if(!currentSpot.isLootTaken()){ currentSpot.emptyChest(); }
 						}
-					}
+
+						if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
+							Console.WriteLine("Not much to see here.");
+						}
+						if(currentSpot.isSkeletonLocation()){
+							currentSpot.getSkeleton().interact(this.player);
+							this.exit();
+						}
+				//	}
+					/*
+					if(currentSpot.isSkeletonLocation()){
+						//currentSpot.getSkeleton().look();
+						currentSpot.getSkeleton().interact(this.player);
+						 this.exit();
+					}*/
 					break;
 
 				case "look":
@@ -425,11 +445,11 @@ class Game {
 						//nextSpot.getLoot().look(); 
 					}
 					//Player spots "nothing" (aka hidden skeleton)
-					if(nextSpot.isSkeletonLocation()){
+					/*if(nextSpot.isSkeletonLocation()){
 						nextSpot.getSkeleton().look();
-					}
+					}*/
 					//Player spots nothing
-					if(!nextSpot.isExitLocation() && !nextSpot.isKeyLocation() && !nextSpot.isLootLocation() && !nextSpot.isSkeletonLocation()){
+					if(!nextSpot.isExitLocation() && !nextSpot.isKeyLocation() && !nextSpot.isLootLocation()){
 						Console.WriteLine("Not much to see here.");
 					}
 					break;
