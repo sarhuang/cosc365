@@ -44,26 +44,28 @@ class Level {
 		this.x = x;
 		this.y = y;
 	}
-	public Location[,] getGrid(){ return this.grid; }
-	public int getXBoundary() { return this.x; }
-	public int getYBoundary() { return this.y; }
+	public Location[,] getGrid() { return this.grid; }
+	public int getXBoundary()	 { return this.x; }
+	public int getYBoundary()	 { return this.y; }
 }
 
 
 
 /* Contains zero or more Entity objects and handles each interaction. */
 class Location {
-	bool isExit;
-	Key key;
-	bool keyLocation, keyTaken;
-	List<Loot> loot;
-	bool lootLocation, lootTaken;
-	Skeleton skeleton;
-	bool skeletonLocation;
+	bool isExit;		//Whether the Location object is the exit
+	Key key;			//Key Entity found in Location 
+	bool keyLocation;	//Whether the Key is in the Location
+	bool keyTaken;		//Whether the Player picked up the Key (no longer in Location)
+	List<Loot> loot;	//List of Loot Entities since in case multiple chests in Location
+	bool lootLocation;	//Whether the Location object has at least one Loot entity
+	bool lootTaken;		//Whether the Player picked up the Loot (chests are now empty)
+	Skeleton skeleton;	//Skeleton Entity found in Location
+	bool skeletonLocation;	//Whether a Skeleton is in the Location
 
 	public Location(){
-		this.isExit = false;
-		this.key = null;
+		this.isExit = false;			
+		this.key = null;				
 		this.keyLocation = false;
 		this.keyTaken = false;
 		this.loot = null;
@@ -82,9 +84,7 @@ class Location {
 		this.key = new Key();
 		this.keyLocation = true;
 	}
-	public void removeKey(){ 
-		this.keyTaken = true; 
-	}
+	public void removeKey(){ this.keyTaken = true; }
 	public bool isKeyLocation(){ return this.keyLocation; }
 	public bool isKeyTaken(){ return this.keyTaken; }
 	public Key getKey(){ return this.key; }
@@ -117,17 +117,16 @@ class Location {
 }
 
 
+/* Special dialog lines for the Player encountering the exit. */
 class Exit : Location {
 	public void look(){
 		Console.WriteLine("That looks like the gate out of this spooky place!");
 	}
 	public void interact(bool haveKey){
-		if(haveKey){
-			Console.WriteLine("You open the gate with your key!");
-		}
-		else{
-			Console.WriteLine("You try to open the gate, but it's locked. Must need a key...");
-		}
+		if(haveKey){ 
+			Console.WriteLine("You open the gate with your key!"); 
+		}else{ 
+			Console.WriteLine("You try to open the gate, but it's locked. Must need a key..."); }
 	}
 }
 
@@ -136,12 +135,12 @@ class Exit : Location {
 abstract class Entity {
 	//describe the entity (if it can be seen) when player looks
 	public virtual  void look() {}
-
 	//define what happens when player goes to location containing entity
 	public abstract void interact(Player player);
 }
 
 
+/* Special dialog lines for the Player encountering a key. */
 class Key : Entity {
 	public override void look() {
 		Console.WriteLine("You see a key on the ground! Might need that to get out of here...");	
@@ -153,6 +152,7 @@ class Key : Entity {
 }
 
 
+/* Special dialog lines for the Player encountering loot. */
 class Loot : Entity {
 	public int numCoins { get; set; }
 	public bool chestOpened { get; set; }
@@ -160,16 +160,14 @@ class Loot : Entity {
 	public override void look() {
 		if(this.chestOpened){
 			Console.WriteLine("A treasure chest sits already opened.");
-		}
-		else{
+		}else{
 			Console.WriteLine("You see what looks like the corner of a treasure chest poking out of the ground.");	
 		}
 	}
 	public override void interact(Player player){
 		if(this.chestOpened){
 			Console.WriteLine("The chest is empty...");
-		}
-		else{
+		}else{
 			Console.WriteLine($"You open the chest and find {this.numCoins} coins!");
 			player.coinInventory += numCoins;
 		}
@@ -177,6 +175,7 @@ class Loot : Entity {
 }
 
 
+/* Special dialog lines for the Player encountering a skeleton. */
 class Skeleton : Entity {
    public override void look(){
 		Console.WriteLine("Not much to see here.");
@@ -189,11 +188,10 @@ class Skeleton : Entity {
 }
 
 
-
 /* Contains information about Player. */
 class Player {
-	public Coords coords { get; set; }
-	bool alive_status;
+	public Coords coords { get; set; }			
+	bool alive_status;							
 	bool key_status;
 	public int coinInventory { get; set; }
 	public Location currentLocation { get; set;}
@@ -205,19 +203,11 @@ class Player {
 		this.coinInventory = 0;
 	}
 
-	public bool is_at(Coords xy) {
-		return this.coords == xy;
-	}
-
+	public bool is_at(Coords xy) { return this.coords == xy; }
 	public bool is_alive() { return this.alive_status; }
-	public void set_alive_status(bool val){
-		this.alive_status = val;
-	}
+	public void set_alive_status(bool val){ this.alive_status = val; }
 	public bool has_key() { return this.key_status; }
-	public void set_key_status(bool val){
-		this.key_status = val;
-	}
-
+	public void set_key_status(bool val){ this.key_status = val; }
 	public void print_stats() {
 		Console.WriteLine(String.Format("{0,-12}{1}", "  LOCATION:", $"{this.coords.x}, {this.coords.y}"));
 		Console.WriteLine(String.Format("{0,-12}{1}", "  COINS:", $"{this.coinInventory}"));
@@ -227,15 +217,12 @@ class Player {
 }
 
 
-
 /* The game's main driver class. Contains Player and Level objects. Also handles input. */
 class Game {
 	int    num_turns;
 	Level  level;
 	public Player player { get; }
-	public Game() {
-		this.player = new Player();
-	}
+	public Game() { this.player = new Player(); }
 
 	public void load(string path) {
 		this.level = new Level();
@@ -256,53 +243,50 @@ class Game {
 					count = int.Parse(split[3]);
 				}
 
-
 				switch (split[0]) {
+					//Set the level's size to x by y
 					case "size":
-						// Set the level's size to x by y
 						level.createGrid(x,y);
 						break;
+					//Set the level's exit location to be x, y
 					case "exit":
-						// Set the level's exit location to be x, y
 						Location exitSpot = new Location();
 						exitSpot.becomeExit();
 						level.getGrid()[x, y] = exitSpot;
 						break;
+					//Add a key to location x, y
 					case "key":
-						// Add a key to location x, y
 						if(level.getGrid()[x, y] == null){
 							Location keySpot = new Location();
 							keySpot.addKey();
 							level.getGrid()[x, y] = keySpot;
 						}
+						//If there is already a Location in the grid, just add on to it
 						else{
 							level.getGrid()[x, y].addKey();
 						}
 						break;
+					//Add loot to location x, y with count coins
 					case "loot":
-						// Add loot to location x, y with count coins
 						if(level.getGrid()[x, y] == null){
 							Location chestSpot = new Location();
 							chestSpot.createLootList();
 							chestSpot.addLoot(count);
 							level.getGrid()[x, y] = chestSpot;
-						}
-						else{
+						}else{
 							if(level.getGrid()[x, y].getLoot() == null){
 								level.getGrid()[x, y].createLootList();
 							}
 							level.getGrid()[x, y].addLoot(count);
 						}
 						break;
+					//Add a skeleton to location x, y
 					case "skeleton":
-						// Add a skeleton to location x, y
-						//Console.WriteLine($"{x}, {y}");
 						if(level.getGrid()[x, y] == null){
 							Location skeletonSpot = new Location();
 							skeletonSpot.addSkeleton();
 							level.getGrid()[x, y] = skeletonSpot;
-						}
-						else{
+						}else{
 							level.getGrid()[x, y].addSkeleton();
 						}
 						break;
@@ -315,10 +299,11 @@ class Game {
 		}
 	}
 
+
 	public void input(string line) {
 		this.num_turns += 1;
 
-		// Check for exhaustion?
+		//End game if player hits exhaustion
 		if(this.num_turns > (2 * level.getGrid().Length)){
 			Console.WriteLine("You have died from exhaustion.");
 			this.player.set_alive_status(false);
@@ -331,6 +316,7 @@ class Game {
 			Console.WriteLine($"Bad command in input: '{line}'");
 			return;
 		}
+		//Update player coordinates
 		Coords new_coords = this.player.coords;
 		switch (split[1]) {
 			case "north":
@@ -350,7 +336,7 @@ class Game {
 				return;
 		}
 
-		// Are the new coords valid?
+		//Error check new coordinates are within grid
 		bool withinX = new_coords.x >= 0 && new_coords.x < this.level.getXBoundary();
 		bool withinY = new_coords.y >= 0 && new_coords.y < this.level.getYBoundary();
 		if(!withinX || !withinY){
@@ -363,7 +349,7 @@ class Game {
 					Location currentSpot = level.getGrid()[this.player.coords.x, this.player.coords.y];
 					this.player.currentLocation = currentSpot;
 					
-					//Player reaches the exit
+					//Player reaches the exit (look + interact)
 					if(currentSpot.isExitLocation()){
 						Exit exit = new Exit();
 						exit.look();
@@ -379,55 +365,32 @@ class Game {
 						foreach(Loot numChest in currentSpot.getLoot()){
 							numChest.look();
 						}	
-						//currentSpot.getLoot().look();
 					}
-	
-					//Player reaches the skeleton
-					/*if(currentSpot.isSkeletonLocation()){
-						currentSpot.getSkeleton().look();
+					//Player INTERACTS with key
+					if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
+						currentSpot.getKey().interact(this.player);
+						currentSpot.removeKey();
+					}
+					//Player INTERACTS with loot
+					if(currentSpot.isLootLocation()){
+						foreach(Loot numChest in currentSpot.getLoot()){
+							numChest.interact(this.player);
+						}
+						if(!currentSpot.isLootTaken()){ currentSpot.emptyChest(); }
+					}
+					//Player finds nothing (including the skeleton's skeleton)
+					if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
+						Console.WriteLine("Not much to see here.");
+					}
+					//Skeleton interacts with Player
+					if(currentSpot.isSkeletonLocation()){
 						currentSpot.getSkeleton().interact(this.player);
 						this.exit();
-					}*/
-
-
-					//Player acts on an empty spot
-				//	if(!currentSpot.isSkeletonLocation() && !currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
-				//		Console.WriteLine("Not much to see here.");
-				//	}
-					//Player acts on a specific location
-				//	else{
-						if(currentSpot.isKeyLocation() && !currentSpot.isKeyTaken()){
-							currentSpot.getKey().interact(this.player);
-							currentSpot.removeKey();
-						}
-						if(currentSpot.isLootLocation()){
-							foreach(Loot numChest in currentSpot.getLoot()){
-								numChest.interact(this.player);
-							}
-							//currentSpot.getLoot().interact(this.player);
-							if(!currentSpot.isLootTaken()){ currentSpot.emptyChest(); }
-						}
-
-						if(!currentSpot.isExitLocation() && !currentSpot.isKeyLocation() && !currentSpot.isLootLocation()){
-							Console.WriteLine("Not much to see here.");
-						}
-						if(currentSpot.isSkeletonLocation()){
-							currentSpot.getSkeleton().interact(this.player);
-							this.exit();
-						}
-				//	}
-					/*
-					if(currentSpot.isSkeletonLocation()){
-						//currentSpot.getSkeleton().look();
-						currentSpot.getSkeleton().interact(this.player);
-						 this.exit();
-					}*/
+					}
 					break;
 
 				case "look":
-					// Need to look at the location.
 					Location nextSpot = level.getGrid()[new_coords.x, new_coords.y];
-
 					//Player spots exit
 					if(nextSpot.isExitLocation()){ 
 						Exit exit = new Exit();
@@ -442,13 +405,8 @@ class Game {
 						foreach(Loot numChest in nextSpot.getLoot()){
 							numChest.look();
 						}
-						//nextSpot.getLoot().look(); 
 					}
-					//Player spots "nothing" (aka hidden skeleton)
-					/*if(nextSpot.isSkeletonLocation()){
-						nextSpot.getSkeleton().look();
-					}*/
-					//Player spots nothing
+					//Player spots nothing (including skeleton's location)
 					if(!nextSpot.isExitLocation() && !nextSpot.isKeyLocation() && !nextSpot.isLootLocation()){
 						Console.WriteLine("Not much to see here.");
 					}
@@ -461,9 +419,8 @@ class Game {
 		}
 	}
 
-
+	//Exit conditions to win the game
 	bool is_over() {
-		// What are the exit conditions?
 		if(this.player.has_key() && this.player.currentLocation.isExitLocation()){
 			return true;
 		}
@@ -496,11 +453,10 @@ class Game {
 		Console.WriteLine("================================================================");
 		// Look at the current location.
 		Location spot = this.level.getGrid()[this.player.coords.x, this.player.coords.y];		
-		bool nothingThere = !spot.isExitLocation() && !spot.isKeyLocation() && !spot.isLootLocation() && !spot.isSkeletonLocation();
-		if(nothingThere){
+		if(!spot.isExitLocation() && !spot.isKeyLocation() && !spot.isLootLocation() && !spot.isSkeletonLocation()){
 			Console.WriteLine("Not much to see here.");
-		}
-		else{
+		}else{
+			//Just in case the level had someting at the start
 			if(spot.isExitLocation()){
 				Exit exit = new Exit();
 				exit.look(); 
@@ -510,14 +466,12 @@ class Game {
 				foreach(Loot numChest in spot.getLoot()){
 					numChest.look();
 				}
-				//spot.getLoot().look(); 
 			}
 			if(spot.isSkeletonLocation()){ spot.getSkeleton().look(); }
 		}	
 		Console.Write($"{this.player.coords.x}, {this.player.coords.y}> ");
 	}
 }
-
 
 
 /* The program's class. Will contain the Main() method. */

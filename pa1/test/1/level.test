@@ -1,0 +1,21 @@
+You awake in a daze to find yourself alone in the dead of night, surrounded by headstones...
+You must escape this graveyard.
+================================================================
+Not much to see here.
+0, 0> ================================================================
+Bad command in input: 'size 2 2'
+0, 0> ================================================================
+Bad command in input: 'key 0 1'
+0, 0> ================================================================
+Bad command in input: 'loot 0 1 10'
+0, 0> ================================================================
+Bad command in input: 'exit 1 1'
+0, 0> ================================================================
+Bad command in input: 'skeleton 1 0'
+0, 0> ================================================================
+You did not escape the graveyard. GAME OVER
+Game ended after 5 turn(s).
+  LOCATION: 0, 0
+  COINS:    0
+  KEY:      False
+  DEAD:    False
