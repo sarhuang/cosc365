@@ -21,4 +21,5 @@ for file in *.txt; do
 
 		echo "$value" > "$name/$property.txt"
 	done < "$file"
+	rm $file
 done
