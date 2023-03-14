@@ -11,7 +11,7 @@ max_horsepower_car=""
 max_horsepower=0
 
 #Separate each data piece into its own category following the header
-while IFS=',' read -r make model mpg cylinders displacement horsepower weight acceleration year origin; do	
+while IFS=',' read -r make model mpg cylinders displacement horsepower weight acceleration model2 origin; do	
 	#This check skips the header
 	if [ "$horsepower" != "Horsepower" ]; then
 		if [ $(echo "$horsepower > $max_horsepower" | bc) == 1 ]; then
