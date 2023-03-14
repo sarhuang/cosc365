@@ -1,7 +1,7 @@
 #Name: Sarah Huang
 #Date: 3/14/23
 #Program: part4.sh
-#Purpose:
+#Purpose: Extract the sequence samples from each file and put them back in the correct order so that you can perform some analysis on the whole sequence
 
 #!/usr/bin/env bash
 
