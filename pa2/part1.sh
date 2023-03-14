@@ -9,13 +9,13 @@
 
 # Your solution for part 1 goes here.
 
-for file in "part1_start"/*.txt; do
+for file in *.txt; do
 
 	name=$(basename "$file" .txt)
 	mkdir "$name"
 
 	#Extra condition since read will fail when reading a line with no newline
-	while read line || [ -n "$line"]; do
+	while read line || [ -n "$line" ]; do
 		property=$(echo "$line" | awk '{print $1}') #Read 1st column of properties (id, age, email)
 		value=$(echo "$line" | awk '{print $2}') #Read 2nd column of values
 
