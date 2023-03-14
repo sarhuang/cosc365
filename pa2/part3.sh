@@ -8,4 +8,4 @@
 # Your solution for part 3 goes here.
 
 awk -F',' 'NR > 1 && $6 > max_horsepower { max_horsepower_car = $1; max_horsepower = $6 }
-		   END { print max_horsepower_car max_horsepower > "answer.txt" }' < cars.csv
+		   END { printf "%s %.6f\n", max_horsepower_car, max_horsepower > "answer.txt" }' < cars.csv
