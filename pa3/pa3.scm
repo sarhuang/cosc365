@@ -17,19 +17,12 @@
 ;;inc-list
 ;take a positive integer n as its only parameter and evaluate to a list containing every integer from 1 to n 
 (define (inc-list n)
-  ;if n = 0, make an empty list. else, make a list counting from 1 to n.
+  ;if n = 0, make an empty list. else, append elements 1 to n.
   (if (= n 0)
-	  (list)			
-	  (count-up n)
+	  (list)
+	  (append (inc-list (- n 1)) (list n))
   )
 )	
-(define (count-up n)
-	(if (= n 1)
-		(list 1)
-		;if n > 1, it's going to append it to the list
-		(append (count-up (- n 1)) (list n))
-	)
-)
 
 
 
