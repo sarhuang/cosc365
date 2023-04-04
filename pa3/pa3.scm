@@ -1,10 +1,21 @@
-(define (list-len l)
-    #f ;; TODO: return something other than FALSE
-    )
+;Name: Sarah Huang
+;Date:
+;Program: pa3.scm
+;Purpose: Write functions from scratch (some are built-in) in scheme
 
+
+;take a single list as a parameter and compute evaluate the number of elements in the list
+(define (list-len l)
+	(if (null? l)
+		0
+		(+ 1 (list-len (cdr l)))
+	)
+)
+
+;take a positive integer n as its only parameter and evaluate to a list containing every integer from 1 to n 
 (define (inc-list n)
-    #f ;; TODO: return something other than FALSE
-    )
+    
+)
 
 (define (rev-list l)
     #f ;; TODO: return something other than FALSE
