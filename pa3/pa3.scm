@@ -4,6 +4,7 @@
 ;Purpose: Write functions from scratch (some are built-in) in scheme
 
 
+;;list-len
 ;take a single list as a parameter and compute evaluate the number of elements in the list
 (define (list-len l)
 	(if (null? l)
@@ -12,10 +13,26 @@
 	)
 )
 
+
+;;inc-list
 ;take a positive integer n as its only parameter and evaluate to a list containing every integer from 1 to n 
 (define (inc-list n)
-    
+  ;if n = 0, make an empty list. else, make a list counting from 1 to n.
+  (if (= n 0)
+	  (list)			
+	  (count-up n)
+  )
+)	
+(define (count-up n)
+	(if (= n 1)
+		(list 1)
+		;if n > 1, it's going to append it to the list
+		(append (count-up (- n 1)) (list n))
+	)
 )
+
+
+
 
 (define (rev-list l)
     #f ;; TODO: return something other than FALSE
