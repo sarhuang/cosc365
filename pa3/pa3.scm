@@ -68,20 +68,32 @@
         (split-rec (cons (list (car l)) (cdr l))))
 
     ;;merge the two halves into a single sorted list.
-    (define (merge l1 l2)
-        (cond ((null? l1) l2)
-              ((null? l2) l1)
-              ((< (car l1) (car l2))
-               (cons (car l1) (merge (cdr l1) l2)))
-              (else (cons (car l2) (merge l1 (cdr l2))))
+    (define (merge list1 list2)
+        ;if list1 is null, return list2
+		(cond ((null? list1) 
+		    list2
+		)
+		;if list2 is null, return list1
+		((null? list2) 
+		    list1
+		)
+		;if 1st element of list1 > 1st element of list2, add list2 1st element to result of merging list1 and remainder of list2
+		((> (car list1) (car list2))
+			(append (list (car list2)) (merge (cdr list2) list1))
+		)
+		;add 1st element of list1 to result of merging list2 and remainder of list1
+		(else (append (list (car list1)) (merge (cdr list1) list2)))
 		)
 	)
 
     ;;recursively sort and merge the two halves of the list.
-    (if (<= (length l) 1)
-        l
-        (let* ((halves (split l))
-               (left (car halves))
-               (right (cdr halves)))
-            (merge (merge-sort left) (merge-sort right))))
+	(if (<= (length l) 1)
+        l	;the one element list doesn't need to be merge sorted
+    
+		(let* ((halves (split l)) 
+			(front (car halves)) 
+			(back (cdr halves)))
+            (merge (merge-sort front) (merge-sort back))
+		)
+	)
 )
