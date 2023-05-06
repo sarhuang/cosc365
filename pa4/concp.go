@@ -1,5 +1,5 @@
 /* Name: Sarah Huang
- * Date: 5/ /23
+ * Date: 5/6/23
  * Program: concp.go
  * Purpose: Use Go's concurrency tools to copy multiple files simultaneously
  
@@ -24,7 +24,7 @@ import (
  * waitGroup = pointer to sync.WaitGroup to track completion of goroutine
  * errorChannel = channel reports any errors
  */
-func cp(name, destination string, waitGroup *sync.WaitGroup, errorChannel chan<-error){
+func cp(name, destination string, errorChannel chan<-error, waitGroup *sync.WaitGroup){
     //Ensure to decrement the wait group counter when function is done
 	defer waitGroup.Done();
 
@@ -107,15 +107,14 @@ func main(){
 	*/
 	errorChannel := make(chan error);
 	var waitGroup sync.WaitGroup;
-
 	//Use one goroutine per file to do the concurrent copying
 	for _, name := range os.Args[1:len(os.Args)-1]{
 		waitGroup.Add(1);
-		go cp(name, destination, &waitGroup, errorChannel);
+		go cp(name, destination, errorChannel, &waitGroup);
 	}
 
 	//Another channel dedicated for waiting allows main thread to also handle errors
-	wgDoneChannel := make(chan struct{});
+	wgDoneChannel := make(chan bool);
 	go func(){
 		waitGroup.Wait();
 		close(wgDoneChannel);
@@ -123,10 +122,10 @@ func main(){
 
 	//Listening to errors or the WaitGroup to complete
 	select{
-		case <- wgDoneChannel:
-			fmt.Printf("All files successfully copied\n");
 		case err := <-errorChannel:
 			fmt.Printf("%s\n", err);
+		case <- wgDoneChannel:
+			fmt.Printf("All files successfully copied\n");
 	}
 	close(errorChannel);
 }
