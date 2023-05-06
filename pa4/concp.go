@@ -42,10 +42,23 @@ func cp(name, destination string, waitGroup *sync.WaitGroup, errorChannel chan<-
 	}
 	defer newFile.Close();
 
-	_, err = io.Copy(newFile, srcFile);
-	if(err != nil){
-		errorChannel<-err;
-		return;
+
+	buffer := make([]byte, 1024);
+	for{
+		n, err := srcFile.Read(buffer);
+		if(err != nil && err != io.EOF){
+			errorChannel<-err;
+			return;
+		}
+		if(n == 0){
+			break;
+		}
+		_, err = newFile.Write(buffer[:n]);
+
+		if(err != nil){
+			errorChannel<-err;
+			return;
+		}
 	}
 }
 
