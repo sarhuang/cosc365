@@ -2,6 +2,10 @@
  * Date: 5/ /23
  * Program: concp.go
  * Purpose: Use Go's concurrency tools to copy multiple files simultaneously
+ 
+ * How to run Go program:
+ * go build concp.go
+ * ./concp _ _ _
  */
 
 
@@ -14,49 +18,65 @@ import (
 	"sync"
 )
 
-
+/*Creates a copy of the given file using Read() and Write()
+ * name = name of source file will be copied
+ * destination = destination path where the file should be copied
+ * waitGroup = pointer to sync.WaitGroup to track completion of goroutine
+ * errorChannel = channel reports any errors
+ */
 func cp(name, destination string, waitGroup *sync.WaitGroup, errorChannel chan<-error){
-    defer waitGroup.Done();
+    //Ensure to decrement the wait group counter when function is done
+	defer waitGroup.Done();
 
+	//Error check - source file doesn't exist
 	fileInfo, err := os.Stat(name)
-	if(err != nil){
-		errorChannel<-err;
+	if(os.IsNotExist(err)){
+		errorChannel <- err;
 		return;
 	}
+	//Error check - source file isn't a regular file
 	if(!fileInfo.Mode().IsRegular()){
-		errorChannel<-fmt.Errorf("'%s' is an invalid file\n", name);
+		errorChannel <- fmt.Errorf("'%s' is an invalid file\n", name);
 		return;
 	}
-
+	//Open source file (hopefully successfully)
 	srcFile, err := os.Open(name);
 	if(err != nil){
-		errorChannel<-err;
+		errorChannel <- err;
 		return;
 	}
-	defer srcFile.Close();
+	defer srcFile.Close(); //source file will close at end
 
+
+	//Create new file
 	newFile, err := os.Create(filepath.Join(destination, filepath.Base(name)));
 	if(err != nil){
-		errorChannel<-err;
+		errorChannel <- err;
 		return;
 	}
-	defer newFile.Close();
+	defer newFile.Close(); //newly created file will close at end
 
 
+	//Read and write to make new file
 	buffer := make([]byte, 1024);
-	for{
-		n, err := srcFile.Read(buffer);
+	for true{
+		bytesRead, err := srcFile.Read(buffer);
+		//Error check - read isn't successful
 		if(err != nil && err != io.EOF){
-			errorChannel<-err;
+			errorChannel <- err;
 			return;
 		}
-		if(n == 0){
+		//Break out of loop once done reading/writing file
+		if(bytesRead == 0){
 			break;
 		}
-		_, err = newFile.Write(buffer[:n]);
 
+		//The _ varible signifies we don't need a return value
+		//Write only however many bytes were read
+		_, err = newFile.Write(buffer[:bytesRead]);
+		//Error check - create isn't successful
 		if(err != nil){
-			errorChannel<-err;
+			errorChannel <- err;
 			return;
 		}
 	}
@@ -64,8 +84,6 @@ func cp(name, destination string, waitGroup *sync.WaitGroup, errorChannel chan<-
 
 
 
-//go build hello.go
-// run ./hello
 func main(){
 	//Error check - minimum # of arguments to run program
 	if(len(os.Args) < 3){
@@ -82,27 +100,33 @@ func main(){
 	}
 
 
-	errorChannel := make(chan error)
-
+	/*
+	* errorChannel = Channel for reporting errors
+	* watiGroup = Waits for all copying goroutines to complete
+	* doneChannel = Channel for waiting for all the copying goroutines to finish
+	*/
+	errorChannel := make(chan error);
 	var waitGroup sync.WaitGroup;
 
+	//Use one goroutine per file to do the concurrent copying
 	for _, name := range os.Args[1:len(os.Args)-1]{
 		waitGroup.Add(1);
 		go cp(name, destination, &waitGroup, errorChannel);
 	}
 
-	doneChannel := make(chan struct{});
+	//Another channel dedicated for waiting allows main thread to also handle errors
+	wgDoneChannel := make(chan struct{});
 	go func(){
 		waitGroup.Wait();
-		close(doneChannel);
+		close(wgDoneChannel);
 	}()
 
+	//Listening to errors or the WaitGroup to complete
 	select{
-		case <-doneChannel:
-			fmt.Printf("All files copied\n");
+		case <- wgDoneChannel:
+			fmt.Printf("All files successfully copied\n");
 		case err := <-errorChannel:
-			fmt.Printf("Error during copy: '%s'\n", err);
+			fmt.Printf("%s\n", err);
 	}
-
 	close(errorChannel);
 }
